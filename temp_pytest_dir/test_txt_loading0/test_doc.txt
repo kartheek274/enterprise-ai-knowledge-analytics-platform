@@ -1,0 +1,1 @@
+This is a mock clinical guideline text for testing document loading.

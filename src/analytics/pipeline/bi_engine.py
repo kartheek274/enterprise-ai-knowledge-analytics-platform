@@ -57,11 +57,13 @@ class ConversationalBIEngine:
                 schema_context=schema_context,
             )
             telemetry.sql_generation_ms = (time.perf_counter() - start) * 1_000
+            logger.info("Generated candidate SQL before validation: %s", candidate_sql)
 
             start = time.perf_counter()
             validation = self.sql_validator.validate(candidate_sql)
             telemetry.sql_validation_ms = (time.perf_counter() - start) * 1_000
             if not validation.is_valid or not validation.sanitized_sql:
+                logger.error("SQL validation failed for candidate '%s': %s", candidate_sql, validation.error_message)
                 raise SQLValidationError(message=validation.error_message or "SQL validation failed.")
 
             execution_result = self.sql_executor.execute(validation.sanitized_sql)

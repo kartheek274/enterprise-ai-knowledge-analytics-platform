@@ -1,0 +1,13 @@
+ENTERPRISE DATA GOVERNANCE & AI PRIVACY POLICY
+Document ID: GOV-2026-002
+Source System: ENTERPRISE_GOVERNANCE_CATALOG
+
+1. HIPAA & PII/PHI Protection Rules:
+All AI pipelines, RAG retrievers, and natural language analytics engines must enforce automatic PII/PHI redaction prior to rendering outputs to end users.
+- Redacted Categories: Social Security Numbers [SSN], Medical Record Numbers [MRN], Patient Names, Email Addresses, Phone Numbers, Credit Card Numbers.
+- Strict Mode: When GUARDRAIL_STRICT_MODE is enabled, input prompt injection attempts (DAN jailbreaks, instruction overrides, system prompt extraction) will immediately halt pipeline execution.
+
+2. Business Glossary & Data Quality Standards:
+- Patient Entity: Identified by patient_id. Contains demographic info including state, first_name, last_name, and date_of_birth.
+- Claims Entity: Identified by claim_id, linked to patient_id via foreign key constraint. Fields include claim_amount, claim_status (APPROVED, DENIED, PENDING), and service_date.
+- Financial Records Entity: Identified by record_id, linked to claim_id. Contains paid_amount and payment_date.

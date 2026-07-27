@@ -50,14 +50,30 @@ class QueryEngine:
 
         if retriever is None:
             embedding_service = EmbeddingService()
+            chroma_svc = ChromaService()
+            
+            # Ensure Chroma collection is populated if empty
+            try:
+                if chroma_svc.count_documents(collection_name) == 0:
+                    from src.rag.ingestion.seed import seed_knowledge_base
+                    seed_knowledge_base(collection_name)
+            except Exception:
+                pass
+
             vector_retriever = VectorRetriever(
                 embedding_service=embedding_service,
-                chroma_service=ChromaService(),
+                chroma_service=chroma_svc,
                 collection_name=collection_name,
             )
+            bm25 = BM25Retriever()
+            all_chunks_raw = chroma_svc.get_all_chunks(collection_name)
+            if all_chunks_raw:
+                bm25_chunks = [vector_retriever._to_retrieved_chunk(r) for r in all_chunks_raw]
+                bm25.build_index(bm25_chunks)
+
             self.retriever: BaseRetriever = HybridRetriever(
                 vector_retriever=vector_retriever,
-                bm25_retriever=BM25Retriever(),
+                bm25_retriever=bm25,
                 reranker=reranker or CrossEncoderReranker(),
             )
             self.embedding_provider_name = (

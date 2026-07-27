@@ -1,0 +1,47 @@
+# ============================================================
+# EAKAP — .dockerignore
+# Exclude development artifacts from Docker build context
+# ============================================================
+
+# Version control
+.git
+.gitignore
+
+# Python byte-compiled artifacts
+__pycache__
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+.pytest_cache
+.pytest_tmp
+
+# Virtual environments
+.venv
+venv
+env
+
+# Environment files (injected at runtime via env_file or -e)
+.env
+
+# Tests — not needed at runtime
+tests/
+test_*.py
+
+# Development documentation (optional — comment out to include)
+docs/
+
+# IDE / editor metadata
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# CI / build artifacts
+*.egg-info
+dist/
+build/

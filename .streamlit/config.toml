@@ -1,0 +1,23 @@
+[theme]
+# Enterprise dark theme for EAKAP Console
+base                    = "dark"
+primaryColor            = "#6C63FF"
+backgroundColor         = "#0E1117"
+secondaryBackgroundColor = "#1A1D27"
+textColor               = "#FAFAFA"
+font                    = "sans serif"
+
+[server]
+# Security configuration
+enableCORS            = false
+enableXsrfProtection  = false
+headless              = true
+port                  = 8501
+
+[browser]
+# Opt out of usage statistics in enterprise environments
+gatherUsageStats = false
+
+[client]
+showErrorDetails = true
+toolbarMode      = "minimal"

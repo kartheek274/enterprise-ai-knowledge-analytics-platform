@@ -1,0 +1,10 @@
+# Additional requirements for the EAKAP Enterprise Console UI (Step 10)
+# Usage: pip install -r requirements-ui.txt
+# Note:  Installs base requirements automatically via -r
+-r requirements.txt
+
+# Streamlit — Enterprise Console
+streamlit>=1.30.0
+
+# Pandas — DataFrame display and chart data preparation
+pandas>=1.5.0

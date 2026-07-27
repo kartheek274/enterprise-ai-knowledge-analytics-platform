@@ -1,0 +1,80 @@
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#6C63FF'}}}%%
+graph TB
+    Browser["🌐 Browser / End User"]
+
+    subgraph UILayer["🖥️  UI Layer  ─  src/app/ui/"]
+        MainApp["main_app.py\nEntrypoint + @cache_resource"]
+        State["state.py\nUIStateManager\n(sole st.session_state gateway)"]
+
+        subgraph Components["components/"]
+            Sidebar["sidebar.py\nrender_sidebar()"]
+            RAGTab["rag_tab.py\nrender_rag_tab()"]
+            BITab["bi_tab.py\nrender_bi_tab()"]
+            GovTab["governance_tab.py\nrender_governance_tab()"]
+
+            subgraph Helpers["helpers/"]
+                Cards["cards.py"]
+                Metrics["metrics.py"]
+                Tables["tables.py"]
+                Charts["charts.py"]
+                Badges["badges.py"]
+            end
+        end
+    end
+
+    subgraph AppLayer["🔧  Application Layer  ─  src/app/"]
+        HealthService["health_service.py\nHealthService"]
+        CheckHealth["main.py\ncheck_health()"]
+    end
+
+    subgraph ServiceLayer["⚙️  Service Layer"]
+        QueryEngine["QueryEngine\nsrc/rag/pipeline/"]
+        BIEngine["ConversationalBIEngine\nsrc/analytics/pipeline/"]
+        GovService["GovernanceService\nsrc/governance/"]
+        MemoryMgr["SessionMemoryManager\nsrc/rag/memory/"]
+        Settings["get_settings()\nsrc/common/config/"]
+    end
+
+    subgraph Infrastructure["🏗️  Infrastructure"]
+        ChromaDB[("ChromaDB\nvector store")]
+        SQLite[("SQLite\nrelational DB")]
+        Ollama["Ollama LLM"]
+        SentenceTransformers["Sentence Transformers\nembeddings"]
+    end
+
+    Browser --> MainApp
+
+    MainApp --> State
+    MainApp --> Sidebar
+    MainApp --> RAGTab
+    MainApp --> BITab
+    MainApp --> GovTab
+
+    Sidebar --> HealthService
+    HealthService --> CheckHealth
+
+    RAGTab --> QueryEngine
+    RAGTab --> State
+    RAGTab --> Helpers
+
+    BITab --> BIEngine
+    BITab --> State
+    BITab --> Helpers
+
+    GovTab --> GovService
+    GovTab --> Settings
+    GovTab --> State
+    GovTab --> Helpers
+
+    Sidebar --> State
+    Sidebar --> Helpers
+
+    QueryEngine --> ChromaDB
+    QueryEngine --> Ollama
+    QueryEngine --> SentenceTransformers
+    QueryEngine --> MemoryMgr
+    QueryEngine --> GovService
+
+    BIEngine --> SQLite
+    BIEngine --> Ollama
+    BIEngine --> GovService

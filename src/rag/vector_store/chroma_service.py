@@ -225,3 +225,37 @@ class ChromaService:
                 message=f"Vector search failed on collection '{collection_name}'.",
                 original_exception=e
             )
+
+    def get_all_chunks(self, collection_name: str = "healthcare_knowledge") -> List[Dict[str, Any]]:
+        """
+        Retrieves all document content, IDs, and metadata from the specified collection.
+        """
+        try:
+            if self._use_fallback:
+                store = self.client._collections.get(collection_name, {})
+                return [
+                    {
+                        "id": doc_id,
+                        "document": record["document"],
+                        "metadata": record["metadata"],
+                    }
+                    for doc_id, record in store.items()
+                ]
+
+            collection = self.client.get_collection(name=collection_name)
+            data = collection.get(include=["documents", "metadatas"])
+            results = []
+            if data and data.get("ids"):
+                ids = data["ids"]
+                docs = data.get("documents") or [""] * len(ids)
+                metas = data.get("metadatas") or [{}] * len(ids)
+                for idx in range(len(ids)):
+                    results.append({
+                        "id": ids[idx],
+                        "document": docs[idx],
+                        "metadata": metas[idx] or {},
+                    })
+            return results
+        except Exception as e:
+            logger.warning(f"Could not retrieve chunks from collection '{collection_name}': {e}")
+            return []

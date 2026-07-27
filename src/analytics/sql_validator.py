@@ -43,6 +43,7 @@ class SQLValidator:
     def validate(self, sql: str) -> SQLValidationResult:
         """Return validation result with sanitized SQL when safe."""
         candidate = self._normalize(sql)
+        logger.info("SQL received by SQLValidator: %s", candidate)
         if not candidate:
             return SQLValidationResult(is_valid=False, error_message="SQL is empty.")
 
@@ -71,7 +72,7 @@ class SQLValidator:
             return SQLValidationResult(is_valid=False, error_message=schema_error)
 
         sanitized = self._enforce_limit(candidate)
-        logger.info("SQL validated successfully")
+        logger.info("SQL validated successfully: %s", sanitized)
         return SQLValidationResult(is_valid=True, sanitized_sql=sanitized)
 
     @staticmethod

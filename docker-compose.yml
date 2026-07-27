@@ -1,0 +1,32 @@
+# ============================================================
+# EAKAP Enterprise Console — Docker Compose
+# Step 10: Compose stack with volume-mounted data and logs
+# ============================================================
+version: "3.9"
+
+services:
+  eakap-console:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: eakap:latest
+    container_name: eakap_enterprise_console
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      # Persist documents and vector store across container restarts
+      - ./data:/app/data
+      # Persist log files for audit trail
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    environment:
+      # Streamlit telemetry opt-out in enterprise deployments
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false

@@ -146,7 +146,8 @@ def test_pipeline_execution_and_idempotency(tmp_path):
     assert doc_id_1 == doc_id_2
     
     # Cleanup
-    pipeline.chroma_service.delete_collection(collection_name)
+    if collection_name in pipeline.chroma_service.list_collections():
+        pipeline.chroma_service.delete_collection(collection_name)
 
 def test_ingestion_health_check():
     """Verify that main application startup checks yield successful RAG statuses."""

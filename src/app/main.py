@@ -193,16 +193,42 @@ def check_health() -> Tuple[bool, Dict[str, Any]]:
             "error": f"Database verification failed: {str(e)}"
         }
 
-    # 6. Verify Vector Store (ChromaDB)
+    # 6. Verify Vector Store (ChromaDB) with functional collection & document count check
     try:
         from src.rag.vector_store.chroma_service import ChromaService
         chroma_service = ChromaService()
         collections = chroma_service.list_collections()
-        health_status["vector_store"] = {
-            "status": "healthy",
-            "collections_count": len(collections),
-            "directory": chroma_service.chroma_dir
-        }
+        doc_count = 0
+        if "healthcare_knowledge" in collections:
+            doc_count = chroma_service.count_documents("healthcare_knowledge")
+        
+        # If collection is empty, attempt auto-seeding
+        if doc_count == 0:
+            try:
+                from src.rag.ingestion.seed import seed_knowledge_base
+                seed_knowledge_base("healthcare_knowledge")
+                collections = chroma_service.list_collections()
+                if "healthcare_knowledge" in collections:
+                    doc_count = chroma_service.count_documents("healthcare_knowledge")
+            except Exception:
+                pass
+
+        if doc_count == 0:
+            is_healthy = False
+            health_status["vector_store"] = {
+                "status": "degraded",
+                "collections_count": len(collections),
+                "documents_count": doc_count,
+                "directory": chroma_service.chroma_dir,
+                "error": "No indexed documents found in vector store."
+            }
+        else:
+            health_status["vector_store"] = {
+                "status": "healthy",
+                "collections_count": len(collections),
+                "documents_count": doc_count,
+                "directory": chroma_service.chroma_dir
+            }
     except Exception as e:
         is_healthy = False
         health_status["vector_store"] = {
@@ -227,20 +253,30 @@ def check_health() -> Tuple[bool, Dict[str, Any]]:
             "error": f"Embedding provider verification failed: {str(e)}"
         }
 
-    # 8. Verify LLM Provider configuration without forcing a live model call
+    # 8. Verify LLM Provider with functional generation ping
     try:
         from src.rag.llm.llm_provider import get_llm_provider
         llm_provider = get_llm_provider()
-        health_status["llm_provider"] = {
-            "status": "healthy",
-            "provider": llm_provider.provider_name,
-            "model": llm_provider.model_name
-        }
+        ping_response, _, _ = llm_provider.generate("ping", max_tokens=5)
+        if not ping_response:
+            is_healthy = False
+            health_status["llm_provider"] = {
+                "status": "unhealthy",
+                "provider": llm_provider.provider_name,
+                "model": llm_provider.model_name,
+                "error": "LLM ping returned empty response."
+            }
+        else:
+            health_status["llm_provider"] = {
+                "status": "healthy",
+                "provider": llm_provider.provider_name,
+                "model": llm_provider.model_name
+            }
     except Exception as e:
         is_healthy = False
         health_status["llm_provider"] = {
             "status": "unhealthy",
-            "error": f"LLM provider verification failed: {str(e)}"
+            "error": f"LLM provider functional ping failed: {str(e)}"
         }
 
     # 9. Verify Prompt Manager registry availability

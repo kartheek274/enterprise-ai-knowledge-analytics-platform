@@ -1,0 +1,18 @@
+CLINICAL WORKFLOW & PRIOR AUTHORIZATION GUIDELINES
+Document ID: DOC-2026-001
+Source System: ENTERPRISE_CLINICAL_REPOSITORY
+
+1. Prior Authorization Procedures:
+Prior authorization is required for all elective inpatient admissions, specialized outpatient procedures, and high-cost imaging (MRI, PET, CT scans).
+- Standard Turnaround Time: 14 calendar days from receipt of complete clinical documentation.
+- Urgent Turnaround Time: 72 hours when delay could jeopardize patient health.
+- Appeals Process: First-level peer-to-peer review must be requested within 30 days of initial denial notification.
+
+2. Medical Necessity Criteria:
+All care decisions must satisfy evidence-based medical necessity criteria derived from InterQual and MCG clinical care guidelines.
+- Primary Care Referral: Mandatory for specialist visits under HMO plans.
+- Emergency Services: No prior authorization required for emergency medical conditions under the prudent layperson standard.
+
+3. Claims Submission Standards:
+Clean claims must be submitted within 90 days of service date for Massachusetts (MA) and 180 days for New York (NY).
+- Denial Codes: CO-50 (non-covered service), CO-16 (missing clinical info), CO-97 (bundled service).
