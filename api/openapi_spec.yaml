@@ -1,0 +1,502 @@
+openapi: 3.0.3
+info:
+  title: Enterprise Data Trust Framework (EDTF) - Metadata API Services
+  description: >-
+    Central REST API microservice layer representing the control plane for data governance,
+    data quality rules, exception tracking, compliance policies, lineage definitions, and execution run histories.
+    Direct SQL connections from Spark clusters or dbt runners are disabled.
+  version: 1.0.0
+servers:
+  - url: https://api.datagovernance.internal/v1
+    description: Internal Secure Enterprise Metadata Router
+paths:
+  /auth/token:
+    post:
+      summary: Authenticate client service and obtain OAuth2 bearer token
+      description: Services like Databricks job runs, dbt Cloud runners, or Power BI refresh gateway authenticate here.
+      operationId: getAuthToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - client_id
+                - client_secret
+              properties:
+                client_id:
+                  type: string
+                  example: "srv_databricks_dq_runner"
+                client_secret:
+                  type: string
+                  format: password
+                  example: "sp_sec_7894318721203"
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  token_type:
+                    type: string
+                    example: "Bearer"
+                  expires_in:
+                    type: integer
+                    example: 3600
+        '401':
+          description: Unauthorized access
+
+  /datasets:
+    get:
+      summary: Retrieve list of registered datasets
+      description: Used by Spark runners to identify datasets to run validations on.
+      operationId: getDatasets
+      parameters:
+        - name: layer
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [BRONZE, SILVER, GOLD]
+        - name: domain_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      security:
+        - OAuth2Bearer: []
+      x-caching-strategy: "Cache in API Layer Redis for 1 hour. Invalidate on Dataset update webhook."
+      responses:
+        '200':
+          description: A paginated list of datasets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 120
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dataset'
+  
+  /datasets/{dataset_id}/rules:
+    get:
+      summary: Fetch Data Quality rules for a specific dataset
+      description: Returns configuration-driven parameters mapped to active rules for PySpark validation engine.
+      operationId: getDatasetRules
+      parameters:
+        - name: dataset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - OAuth2Bearer: []
+      x-caching-strategy: "Broadcast Variable caching in Spark context. API caches response in-memory for 15 minutes."
+      responses:
+        '200':
+          description: Array of active data quality rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DQRule'
+        '404':
+          description: Dataset not found
+
+  /datasets/{dataset_id}/columns:
+    get:
+      summary: Retrieve schema information and classifications
+      operationId: getDatasetColumns
+      parameters:
+        - name: dataset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - OAuth2Bearer: []
+      responses:
+        '200':
+          description: List of column metadata fields
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ColumnMetadata'
+
+  /glossary/terms:
+    get:
+      summary: Retrieve terms in the business glossary
+      operationId: getGlossaryTerms
+      parameters:
+        - name: domain_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - OAuth2Bearer: []
+      responses:
+        '200':
+          description: List of glossary terms matched
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusinessTerm'
+
+  /policies/security:
+    get:
+      summary: Query active masking and encryption policies for columns
+      operationId: getSecurityPolicies
+      parameters:
+        - name: dataset_id
+          in: query
+          required: true
+          schema:
+            type: string
+      security:
+        - OAuth2Bearer: []
+      responses:
+        '200':
+          description: Encryption and Masking mapping lists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  masking_policies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MaskingPolicy'
+                  encryption_policies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EncryptionPolicy'
+
+  /lineage:
+    get:
+      summary: Trace upstream and downstream dependencies
+      operationId: getLineage
+      parameters:
+        - name: asset_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: direction
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [UPSTREAM, DOWNSTREAM, BOTH]
+            default: BOTH
+      security:
+        - OAuth2Bearer: []
+      responses:
+        '200':
+          description: DAG representation of lineage dependencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineageDAG'
+
+  /validation/runs:
+    post:
+      summary: Log the start of a validation execution run
+      operationId: createValidationRun
+      security:
+        - OAuth2Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pipeline_run_id
+                - dataset_id
+                - execution_engine
+              properties:
+                pipeline_run_id:
+                  type: string
+                dataset_id:
+                  type: string
+                execution_engine:
+                  type: string
+                  enum: [PYSPARK, DBT, GREAT_EXPECTATIONS]
+      responses:
+        '201':
+          description: Validation run successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validation_run_id:
+                    type: string
+                    example: "VAL_RUN_908237482"
+
+  /validation/runs/{validation_run_id}/results:
+    post:
+      summary: Write metrics and evaluations for an executed validation run
+      operationId: postValidationResults
+      parameters:
+        - name: validation_run_id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - OAuth2Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - total_records
+                - passed_records
+                - failed_records
+                - results
+              properties:
+                total_records:
+                  type: integer
+                passed_records:
+                  type: integer
+                failed_records:
+                  type: integer
+                results:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RuleResult'
+      responses:
+        '200':
+          description: Validation results and metrics saved
+
+  /exceptions:
+    post:
+      summary: Quarantine a failed data record reference
+      operationId: logException
+      security:
+        - OAuth2Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExceptionRecord'
+      responses:
+        '201':
+          description: Exception recorded and assigned to data steward queue
+
+  /notifications/send:
+    post:
+      summary: Dispatch message through active notification channel rules
+      operationId: dispatchNotification
+      security:
+        - OAuth2Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pipeline_run_id
+                - severity
+                - message
+              properties:
+                pipeline_run_id:
+                  type: string
+                severity:
+                  type: string
+                  enum: [INFO, WARNING, CRITICAL]
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Notification queued in broker queue successfully
+
+components:
+  securitySchemes:
+    OAuth2Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Dataset:
+      type: object
+      properties:
+        dataset_id:
+          type: string
+        dataset_name:
+          type: string
+        physical_format:
+          type: string
+        layer:
+          type: string
+        storage_path:
+          type: string
+        certification_status:
+          type: string
+        owner_id:
+          type: string
+        steward_id:
+          type: string
+
+    DQRule:
+      type: object
+      properties:
+        rule_id:
+          type: string
+        rule_name:
+          type: string
+        column_name:
+          type: string
+        category_name:
+          type: string
+        expression_template:
+          type: string
+        rule_parameters:
+          type: object
+          example: {"min_val": 0, "max_val": 100}
+        severity:
+          type: string
+          enum: [INFO, WARNING, CRITICAL]
+        active_status:
+          type: boolean
+
+    ColumnMetadata:
+      type: object
+      properties:
+        column_id:
+          type: string
+        column_name:
+          type: string
+        data_type:
+          type: string
+        is_nullable:
+          type: boolean
+        is_primary_key:
+          type: boolean
+        classification_name:
+          type: string
+        sensitivity_level:
+          type: string
+
+    BusinessTerm:
+      type: object
+      properties:
+        term_id:
+          type: string
+        term_name:
+          type: string
+        definition:
+          type: string
+        approval_status:
+          type: string
+        lifecycle_status:
+          type: string
+
+    MaskingPolicy:
+      type: object
+      properties:
+        column_name:
+          type: string
+        masking_type:
+          type: string
+        masking_expression:
+          type: string
+
+    EncryptionPolicy:
+      type: object
+      properties:
+        column_name:
+          type: string
+        encryption_algorithm:
+          type: string
+        key_vault_reference_id:
+          type: string
+
+    LineageDAG:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+              type:
+                type: string
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              from:
+                type: string
+              to:
+                type: string
+
+    RuleResult:
+      type: object
+      properties:
+        rule_id:
+          type: string
+        records_evaluated:
+          type: integer
+        records_failed:
+          type: integer
+        status:
+          type: string
+          enum: [PASSED, WARNING, FAILED, ERROR]
+
+    ExceptionRecord:
+      type: object
+      properties:
+        validation_run_id:
+          type: string
+        rule_id:
+          type: string
+        quarantine_table_fqn:
+          type: string
+        record_natural_key:
+          type: string
+        failed_column_name:
+          type: string
+        invalid_value:
+          type: string

@@ -1,0 +1,12 @@
+# Core Requirements for EAKAP Foundation
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+sqlalchemy>=2.0.0
+
+# RAG & Ingestion Requirements (Added in Step 4)
+chromadb>=0.4.0
+grpcio>=1.60.0
+pypdf>=3.0.0
+sentence-transformers>=2.2.0
+pytest>=8.0.0

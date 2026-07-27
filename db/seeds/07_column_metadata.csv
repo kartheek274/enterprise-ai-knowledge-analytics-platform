@@ -1,0 +1,10 @@
+column_id,dataset_id,column_name,business_name,data_type,is_nullable,is_primary_key,is_foreign_key,classification_id,term_id
+COL_ACC_ID,DS_RETAIL_ACCT,account_id,Account Identifier,STRING,false,true,false,CLASS_INTERNAL,
+COL_ACC_NUM,DS_RETAIL_ACCT,account_number,Account Number,STRING,false,false,false,CLASS_CONFIDENTIAL,
+COL_ACC_BAL,DS_RETAIL_ACCT,account_balance,Account Balance,DECIMAL(18,2),false,false,false,CLASS_INTERNAL,
+COL_ACC_STATUS,DS_RETAIL_ACCT,account_status,Account Status Code,STRING,false,false,false,CLASS_INTERNAL,
+COL_ACC_CUST_ID,DS_RETAIL_ACCT,customer_id,Customer Identifier,STRING,false,false,true,CLASS_INTERNAL,
+COL_TXN_ID,DS_RETAIL_TXN,transaction_id,Transaction Identifier,STRING,false,true,false,CLASS_INTERNAL,
+COL_TXN_ACC_ID,DS_RETAIL_TXN,account_id,Account Identifier Reference,STRING,false,false,true,CLASS_INTERNAL,
+COL_TXN_AMT,DS_RETAIL_TXN,transaction_amount,Transaction Value,DECIMAL(18,2),false,false,false,CLASS_INTERNAL,
+COL_TXN_DATE,DS_RETAIL_TXN,transaction_date,Transaction Timestamp,TIMESTAMP,false,false,false,CLASS_INTERNAL,

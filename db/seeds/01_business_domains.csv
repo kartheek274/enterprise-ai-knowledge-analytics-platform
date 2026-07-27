@@ -1,0 +1,6 @@
+domain_id,domain_name,description,parent_domain_id
+RETAIL_BANKING,Retail Banking,Standard consumer banking services,
+RETAIL_DEPOSITS,Retail Deposits,Savings and checking account domains,RETAIL_BANKING
+WEALTH_MGMT,Wealth Management,High-net-worth investor assets and brokerages,
+COMM_LENDING,Commercial Lending,Business line-of-credit and loans,
+COMPLIANCE,Regulatory Compliance,Risk models and regulatory reports (e.g. BCBS-239),

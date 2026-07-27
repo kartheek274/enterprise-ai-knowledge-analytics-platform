@@ -1,0 +1,4 @@
+dataset_id,dataset_name,data_product_id,domain_id,physical_format,layer,storage_path,onelake_shortcut_path,is_pii,certification_status,owner_id,steward_id
+DS_RETAIL_ACCT,silver.retail_accounts,,RETAIL_DEPOSITS,DELTA,SILVER,abfss://silver@onelake.dfs.core.windows.net/retail_accounts,,true,SILVER,OWN_FIN_RETAIL,STW_FIN_RETAIL
+DS_RETAIL_TXN,silver.retail_transactions,,RETAIL_DEPOSITS,DELTA,SILVER,abfss://silver@onelake.dfs.core.windows.net/retail_transactions,,false,SILVER,OWN_FIN_RETAIL,STW_FIN_RETAIL
+DS_WEALTH_HOLD,silver.wealth_holdings,,WEALTH_MGMT,DELTA,SILVER,abfss://silver@onelake.dfs.core.windows.net/wealth_holdings,,false,BRONZE,OWN_WEALTH_OPS,STW_WEALTH_OPS

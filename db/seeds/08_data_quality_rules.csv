@@ -1,0 +1,5 @@
+rule_id,rule_name,business_rule_id,template_id,group_id,column_id,expression_override,rule_parameters,severity,active_status,version
+R_ACC_ID_NON_NULL,Account ID Null Check,,,G_RETAIL_NIGHT,COL_ACC_ID,,"{}","CRITICAL",true,"1.0.0"
+R_ACC_BAL_MIN,Account Balance Negative Check,,,G_RETAIL_NIGHT,COL_ACC_BAL,,"{""min_val"": 0.00}","CRITICAL",true,"1.0.0"
+R_ACC_STATUS_ENUM,Account Status Code Check,,,G_RETAIL_NIGHT,COL_ACC_STATUS,,"{""allowed_values"": [""ACTIVE"", ""CLOSED"", ""DORMANT""]}","CRITICAL",true,"1.0.0"
+R_TXN_AMT_WARN,Transaction High Value Check,,,G_RETAIL_NIGHT,COL_TXN_AMT,,"{""max_val"": 100000.00}","WARNING",true,"1.0.0"

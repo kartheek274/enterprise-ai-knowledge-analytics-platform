@@ -1,0 +1,6 @@
+classification_id,classification_name,sensitivity_level,description
+CLASS_PUBLIC,PUBLIC,LOW,Information that can be shared with external public domains
+CLASS_INTERNAL,INTERNAL,LOW,Standard business information restricted to company employees
+CLASS_RESTRICTED,RESTRICTED,MEDIUM,Information with corporate usage limits but not sensitive customer PII
+CLASS_CONFIDENTIAL,CONFIDENTIAL,HIGH,Customer personal identifiable information (PII) or sensitive banking details
+CLASS_SECRET,SECRET,CRITICAL,High security financial ledgers or cryptographic security components

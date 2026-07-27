@@ -1,0 +1,239 @@
+erDiagram
+    %% ==========================================
+    %% Master Schema Entities
+    %% ==========================================
+    "master.business_domains" {
+        VARCHAR domain_id PK
+        VARCHAR domain_name
+        TEXT description
+        VARCHAR parent_domain_id FK
+    }
+
+    "master.data_products" {
+        VARCHAR product_id PK
+        VARCHAR product_name
+        TEXT description
+        VARCHAR domain_id FK
+        JSONB sla_definition
+        JSONB kpi_definitions
+        NUMERIC quality_score_target
+        VARCHAR lifecycle_status
+    }
+
+    "master.business_glossary" {
+        VARCHAR glossary_id PK
+        VARCHAR glossary_name
+        TEXT description
+        VARCHAR domain_id FK
+    }
+
+    "master.business_terms" {
+        VARCHAR term_id PK
+        VARCHAR glossary_id FK
+        VARCHAR term_name
+        TEXT definition
+        VARCHAR approval_status
+        VARCHAR lifecycle_status
+        VARCHAR owner_id FK
+        VARCHAR steward_id FK
+    }
+
+    "master.dataset_registry" {
+        VARCHAR dataset_id PK
+        VARCHAR dataset_name
+        VARCHAR data_product_id FK
+        VARCHAR domain_id FK
+        VARCHAR physical_format
+        VARCHAR layer
+        VARCHAR storage_path
+        VARCHAR certification_status
+        VARCHAR owner_id FK
+        VARCHAR steward_id FK
+    }
+
+    "master.column_metadata" {
+        VARCHAR column_id PK
+        VARCHAR dataset_id FK
+        VARCHAR column_name
+        VARCHAR business_name
+        VARCHAR data_type
+        BOOLEAN is_nullable
+        BOOLEAN is_primary_key
+        BOOLEAN is_foreign_key
+        VARCHAR classification_id FK
+        VARCHAR term_id FK
+    }
+
+    "master.critical_data_elements" {
+        VARCHAR cde_id PK
+        VARCHAR column_id FK
+        VARCHAR regulatory_mandate
+        TEXT justification
+        VARCHAR cde_status
+    }
+
+    "master.data_quality_rules" {
+        VARCHAR rule_id PK
+        VARCHAR rule_name
+        VARCHAR business_rule_id FK
+        VARCHAR template_id FK
+        VARCHAR group_id FK
+        VARCHAR column_id FK
+        JSONB rule_parameters
+        VARCHAR severity
+        BOOLEAN active_status
+        VARCHAR version
+    }
+
+    "master.threshold_rules" {
+        VARCHAR threshold_id PK
+        VARCHAR dataset_id FK
+        VARCHAR metric_type
+        NUMERIC max_threshold
+        VARCHAR severity
+    }
+
+    "master.source_target_mapping" {
+        VARCHAR mapping_id PK
+        VARCHAR source_dataset_id FK
+        VARCHAR target_dataset_id FK
+        VARCHAR source_column_id FK
+        VARCHAR target_column_id FK
+        TEXT transformation_logic
+    }
+
+    "master.lineage_definitions" {
+        VARCHAR lineage_id PK
+        VARCHAR upstream_asset_id
+        VARCHAR downstream_asset_id
+        VARCHAR asset_type
+        VARCHAR transformation_step_id FK
+    }
+
+    %% ==========================================
+    %% Runtime Schema Entities
+    %% ==========================================
+    "runtime.pipeline_runs" {
+        VARCHAR run_id PK
+        VARCHAR pipeline_id
+        VARCHAR run_status
+        VARCHAR triggered_by
+        TIMESTAMP start_timestamp
+        TIMESTAMP end_timestamp
+    }
+
+    "runtime.validation_run_history" {
+        VARCHAR validation_run_id PK
+        VARCHAR pipeline_run_id FK
+        VARCHAR dataset_id
+        VARCHAR execution_engine
+        BIGINT total_records_processed
+        BIGINT passed_records_count
+        BIGINT failed_records_count
+        TIMESTAMP start_timestamp
+    }
+
+    "runtime.validation_results" {
+        BIGINT result_id PK
+        VARCHAR validation_run_id FK
+        VARCHAR rule_id
+        BIGINT records_evaluated
+        BIGINT records_failed
+        VARCHAR execution_status
+    }
+
+    "runtime.exception_repository" {
+        BIGINT exception_id PK
+        VARCHAR validation_run_id FK
+        VARCHAR rule_id
+        VARCHAR quarantine_table_fqn
+        VARCHAR record_natural_key
+        VARCHAR failed_column_name
+        TEXT invalid_value
+        VARCHAR remediation_status
+    }
+
+    "runtime.reconciliation_results" {
+        VARCHAR recon_run_id PK
+        VARCHAR pipeline_run_id FK
+        NUMERIC source_checksum_val
+        NUMERIC target_checksum_val
+        NUMERIC variance_val
+        VARCHAR recon_status
+    }
+
+    %% ==========================================
+    %% Security Schema Entities
+    %% ==========================================
+    "security.access_policies" {
+        VARCHAR access_policy_id PK
+        VARCHAR dataset_id
+        VARCHAR role_id FK
+        VARCHAR group_id FK
+        VARCHAR privilege_type
+        BOOLEAN is_active
+    }
+
+    "security.column_security" {
+        VARCHAR column_security_id PK
+        VARCHAR column_id
+        VARCHAR masking_policy_id FK
+        VARCHAR encryption_policy_id FK
+        VARCHAR required_permission_id FK
+    }
+
+    %% ==========================================
+    %% Audit Schema Entities
+    %% ==========================================
+    "audit.change_requests" {
+        VARCHAR request_id PK
+        VARCHAR entity_type
+        VARCHAR entity_id
+        VARCHAR request_type
+        JSONB proposed_changes
+        VARCHAR request_status
+    }
+
+    "audit.metadata_changes" {
+        BIGINT change_id PK
+        VARCHAR request_id FK
+        VARCHAR target_table
+        VARCHAR primary_key_val
+        VARCHAR operation_type
+        JSONB pre_change_state
+        JSONB post_change_state
+        VARCHAR modified_by
+    }
+
+    %% ==========================================
+    %% Relationships
+    %% ==========================================
+    "master.business_domains" ||--o{ "master.business_domains" : "parent"
+    "master.business_domains" ||--o{ "master.data_products" : "hosts"
+    "master.business_domains" ||--o{ "master.business_glossary" : "organizes"
+    "master.business_glossary" ||--o{ "master.business_terms" : "contains"
+    
+    "master.data_products" ||--o{ "master.dataset_registry" : "bundles"
+    "master.business_domains" ||--o{ "master.dataset_registry" : "governs"
+    
+    "master.dataset_registry" ||--o{ "master.column_metadata" : "defines"
+    "master.business_terms" ||--o{ "master.column_metadata" : "defines-business-meaning-of"
+    
+    "master.column_metadata" ||--o{ "master.critical_data_elements" : "tags-as-critical"
+    "master.column_metadata" ||--o{ "master.data_quality_rules" : "applies-checks-to"
+    
+    "master.dataset_registry" ||--o{ "master.threshold_rules" : "enforces-on"
+    
+    "master.dataset_registry" ||--o{ "master.source_target_mapping" : "maps-source"
+    "master.dataset_registry" ||--o{ "master.source_target_mapping" : "maps-target"
+    "master.column_metadata" ||--o{ "master.source_target_mapping" : "maps-source-column"
+    "master.column_metadata" ||--o{ "master.source_target_mapping" : "maps-target-column"
+
+    "runtime.pipeline_runs" ||--o{ "runtime.validation_run_history" : "orchestrates"
+    "runtime.validation_run_history" ||--o{ "runtime.validation_results" : "logs-rule-execution-for"
+    "runtime.validation_run_history" ||--o{ "runtime.exception_repository" : "captures-quarantine-for"
+    "runtime.pipeline_runs" ||--o{ "runtime.reconciliation_results" : "audits-balancing-for"
+
+    "security.column_security" }o--|| "master.column_metadata" : "secures"
+    
+    "audit.change_requests" ||--o{ "audit.metadata_changes" : "authorizes"
