@@ -1,73 +1,315 @@
-# Enterprise Data Trust Framework (EDTF)
-## Phase 1 & 1.5: Metadata Platform Architecture & Relational Schema
+# Enterprise AI Knowledge & Analytics Platform (EAKAP)
 
-This repository contains the physical schemas, DDL scripts, API specifications, and governance frameworks representing **Phase 1 (Metadata Repository Control Plane)** of the Enterprise Data Trust Framework (EDTF). 
+> An enterprise-grade AI platform that combines Retrieval-Augmented Generation (RAG), Natural Language Analytics, Conversational Memory, Hybrid Search, and AI Governance into a modular, production-oriented architecture.
 
-This platform serves as the decoupled, metadata-driven control center for downstream Databricks PySpark pipelines, dbt transformations, Power BI dashboards, and enterprise catalog systems (Collibra & Microsoft Purview).
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Architecture](https://img.shields.io/badge/Architecture-DDD%20%7C%20SOLID-green)
+![Tests](https://img.shields.io/badge/Tests-83%20Passing-success)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
-## 1. Directory Structure
+# Overview
+
+Enterprise AI Knowledge & Analytics Platform (EAKAP) is a modular backend platform designed to help organizations build secure, scalable, and governable AI applications over enterprise knowledge.
+
+Unlike traditional chatbot implementations, EAKAP integrates:
+
+- Retrieval-Augmented Generation (RAG)
+- Hybrid Search
+- Conversational Memory
+- Natural Language to SQL Analytics
+- Enterprise AI Governance
+- Metadata-driven Knowledge Management
+- Data Quality & Governance concepts
+
+The platform is designed using Domain-Driven Design (DDD), SOLID principles, and clean architecture to provide a production-ready foundation for enterprise AI systems.
+
+---
+
+# Why this project?
+
+Large organizations struggle with:
+
+- Enterprise knowledge scattered across systems
+- Hallucinations from LLMs
+- Lack of governance
+- Limited conversational context
+- Difficulty querying structured databases using natural language
+- Poor explainability and observability
+
+EAKAP addresses these challenges by combining enterprise architecture principles with modern Generative AI patterns.
+
+---
+
+# Architecture
 
 ```text
-├── api/
-│   └── openapi_spec.yaml           # OpenAPI 3.0 REST API spec for the Microservice Layer
-├── db/
-│   ├── ddl/
-│   │   ├── 01_master_repository.sql      # Glossary, catalog definitions, rules and mapping DDLs
-│   │   ├── 02_runtime_repository.sql     # High-volume execution histories, audits and exceptions DDLs
-│   │   ├── 03_security_repository.sql    # RBAC, row-level filtering, column masking and encryption DDLs
-│   │   ├── 04_reference_repository.sql   # Countries, currencies, SWIFT/IFSC validation tables DDLs
-│   │   └── 05_audit_repository.sql       # Schema audit changelogs, approvals, and rollback logs DDLs
-│   └── seeds/
-│       ├── 01_business_domains.csv       # Business Domains Seed data
-│       ├── 03_data_owners.csv            # Data Owners Seed data
-│       ├── 04_data_stewards.csv          # Data Stewards Seed data
-│       ├── 05_data_classification.csv    # Security Classifications Seed data
-│       ├── 06_dataset_registry.csv       # Physical Datasets Seed data
-│       ├── 07_column_metadata.csv        # Columns and schema mapping Seed data
-│       └── 08_data_quality_rules.csv     # Spark DQ rules configurations Seed data
-├── docs/
-│   ├── README.md                         # Quick start documentation (this file)
-│   ├── data_dictionary.md                # Field definitions, classifications and data types
-│   ├── integration_frameworks.md         # PySpark caching, dbt hook mappings, and Collibra syncs
-│   ├── governance_policies_lifecycles.md # Policy lifecycles, SLAs, and certification workflows
-│   ├── architect_interview_guide.md      # Scaling, high availability, DR and enterprise mistakes
-│   ├── architecture_decision_records.md  # Architectural Decision Records (ADRs)
-│   └── er_diagram.mermaid                # Full entity relationship model source (Mermaid format)
+                   +----------------------+
+                   |    User / Client     |
+                   +----------+-----------+
+                              |
+                    REST / Streamlit UI
+                              |
+                +-------------+--------------+
+                | Enterprise Query Engine    |
+                +-------------+--------------+
+                              |
+         +--------------------+--------------------+
+         |                                         |
+         |                                         |
+  Conversational Memory                    Governance Layer
+         |                                         |
+         +--------------------+--------------------+
+                              |
+                     Hybrid Retrieval
+            (BM25 + Vector + Rank Fusion)
+                              |
+                  Context Builder / Prompting
+                              |
+                     LLM Provider Layer
+                    (Ollama / Mock LLM)
+                              |
+                  Enterprise Knowledge Base
 ```
 
 ---
 
-## 2. Core Architectural Principles
+# Features
 
-1. **Decoupled Architecture**: Downstream processing jobs (PySpark, dbt) do not connect directly to the metadata database. They query metadata and publish execution logs through the stateless REST API layer, preventing database locks and security credentials leaks.
-2. **Metadata-Driven Execution**: No schema checks, rule formulas, allowed values, regex patterns, or encryption keys are hardcoded in downstream processing code. They are configured dynamically in the Metadata Master Repository and served via the API.
-3. **Collibra as Governance System of Record (SoR)**: Business glossaries, data classifications, policy configurations, and asset owners are defined in Collibra. Changes are synchronized to the Metadata DB via webhook triggers.
+## Enterprise RAG
+
+- Document ingestion pipeline
+- Intelligent chunking
+- Embeddings
+- ChromaDB integration
+- Prompt management
+- Context builder
+
+## Hybrid Retrieval
+
+- Vector Search
+- BM25 Search
+- Rank Fusion
+- Re-ranking
+
+## Conversational AI
+
+- Session management
+- Stateful conversation memory
+- Context compression
+- Conversation history formatting
+
+## Analytics Engine
+
+- Natural Language → SQL
+- SQL validation
+- Schema inspection
+- BI response generation
+
+## Enterprise AI Governance
+
+- Input guardrails
+- Output guardrails
+- PII detection
+- PII redaction
+- Governance telemetry
+
+## Database Layer
+
+- Metadata repository
+- Business glossary
+- Data quality rules
+- Data stewardship
+- Governance reference data
 
 ---
 
-## 3. Physical Database Setup
+# Project Structure
 
-The DDL scripts are written in standard, high-compliance PostgreSQL syntax. To initialize the metadata repository:
-
-1. Create a database named `metadata_db`.
-2. Execute the scripts in the `/db/ddl/` folder in sequential order:
-   ```bash
-   psql -h <host> -U <user> -d metadata_db -f db/ddl/01_master_repository.sql
-   psql -h <host> -U <user> -d metadata_db -f db/ddl/02_runtime_repository.sql
-   psql -h <host> -U <user> -d metadata_db -f db/ddl/03_security_repository.sql
-   psql -h <host> -U <user> -d metadata_db -f db/ddl/04_reference_repository.sql
-   psql -h <host> -U <user> -d metadata_db -f db/ddl/05_audit_repository.sql
-   ```
+```text
+src/
+│
+├── analytics/
+├── app/
+├── common/
+├── governance/
+├── rag/
+│   ├── context/
+│   ├── embeddings/
+│   ├── ingestion/
+│   ├── llm/
+│   ├── memory/
+│   ├── retrieval/
+│   ├── prompts/
+│   └── pipeline/
+│
+tests/
+docs/
+db/
+api/
+```
 
 ---
 
-## 4. Documentation Index
+# Technology Stack
 
-* **Physical Data Model & Schemas**: Detailed definitions of tables and column properties can be found in the [Data Dictionary](file:///c:/kartheek/Krish/Data%20Quality/docs/data_dictionary.md).
-* **Consumer Integration Guide**: Learn about Spark Driver caching strategies, dbt pre-run hooks, and Collibra/Purview sync pipelines in the [Integration Frameworks Guide](file:///c:/kartheek/Krish/Data%20Quality/docs/integration_frameworks.md).
-* **Governance and SLAs**: Policy-to-closure workflows, issue priority rules, and medallion certification levels are detailed in the [Governance Policies & Lifecycles Guide](file:///c:/kartheek/Krish/Data%20Quality/docs/governance_policies_lifecycles.md).
-* **ADRs**: Key architectural trade-offs and approved designs are recorded in the [Architecture Decision Records](file:///c:/kartheek/Krish/Data%20Quality/docs/architecture_decision_records.md).
-* **Scale, DR & Operations**: Read about high-availability replication, partitioning, and interview strategies in the [Architect Operations Guide](file:///c:/kartheek/Krish/Data%20Quality/docs/architect_interview_guide.md).
-* **ER Diagram**: Visual relationships are modeled in the [ER Diagram](file:///c:/kartheek/Krish/Data%20Quality/docs/er_diagram.mermaid).
+| Category | Technology |
+|-----------|------------|
+| Language | Python |
+| LLM | Ollama |
+| Vector Database | ChromaDB |
+| Retrieval | BM25 + Dense Retrieval |
+| Architecture | DDD, SOLID |
+| Testing | PyTest |
+| Database | SQLite |
+| Configuration | Environment Variables |
+| Logging | Python Logging |
+
+---
+
+# Installation
+
+```bash
+git clone https://github.com/kartheek274/enterprise-ai-knowledge-analytics-platform.git
+
+cd enterprise-ai-knowledge-analytics-platform
+
+python -m venv .venv
+
+source .venv/bin/activate
+# Windows
+.venv\Scripts\activate
+
+pip install -r requirements.txt
+```
+
+---
+
+# Configuration
+
+Create a `.env` file:
+
+```text
+OLLAMA_BASE_URL=http://localhost:11434
+LLM_MODEL=llama3
+CHROMA_PATH=data/vector_store
+```
+
+---
+
+# Running the Application
+
+```bash
+python -m src.app.main
+```
+
+---
+
+# Running Tests
+
+```bash
+pytest -q
+```
+
+Expected:
+
+```text
+83 passed
+```
+
+---
+
+# Roadmap
+
+## ✅ Version 1.0
+
+- Enterprise RAG
+- Hybrid Retrieval
+- Analytics Engine
+- Conversational Memory
+- AI Governance
+- Testing
+
+## 🚧 Version 1.1
+
+- Streamlit Enterprise Console
+- Interactive Chat
+- Analytics Dashboard
+- Session Browser
+
+## 🚧 Version 1.2
+
+- Docker
+- Docker Compose
+- CI/CD
+- GitHub Actions
+
+## 🚧 Version 2.0
+
+- Authentication
+- Multi-user Sessions
+- RBAC
+- Azure OpenAI
+- AWS Bedrock
+- Observability
+- Production Deployment
+
+---
+
+# Screenshots
+
+*(Will be added after the Streamlit UI is completed.)*
+
+---
+
+# Documentation
+
+See the `/docs` directory for:
+
+- Architecture Decisions
+- Data Dictionary
+- Governance Policies
+- Integration Framework
+- ER Diagram
+- Standards & Operations
+
+---
+
+# Contributing
+
+Contributions are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Commit changes.
+4. Open a Pull Request.
+
+---
+
+# License
+
+MIT License
+
+---
+
+# Author
+
+**Kartheek Jagarlamudi**
+
+Senior Analytics Consultant | Data Governance | Enterprise AI | Generative AI | Machine Learning
+
+---
+
+## Future Vision
+
+The long-term vision of EAKAP is to evolve into a full Enterprise AI Platform supporting:
+
+- AI Knowledge Management
+- Enterprise Search
+- Data Governance
+- AI Governance
+- Intelligent Analytics
+- Agentic AI
+- Multi-Agent Collaboration
+- Enterprise AI Observability
